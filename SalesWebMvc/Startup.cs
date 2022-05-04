@@ -10,6 +10,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using SalesWebMvc.Data;
+using Pomelo.EntityFrameworkCore;
+using SalesWebMvc.Services;
 
 namespace SalesWebMvc
 {
@@ -26,17 +28,29 @@ namespace SalesWebMvc
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
-
+            /*
             services.AddDbContext<SalesWebMvcContext>(options =>
-                    options.UseSqlServer(Configuration.GetConnectionString("SalesWebMvcContext")));
+                    options.UseMySql(Configuration.GetConnectionString("SalesWebMvcContext"),
+                    builder => builder.MigrationsAssembly("SalesWebMvc")));
+            */
+            services.AddDbContext<SalesWebMvcContext>(options =>
+            {
+                var connetionString = Configuration.GetConnectionString("ConnectionStrings");
+                connetionString = "server=localhost;userid=developer;password=123456;database=saleswebmvcappdb";
+                options.UseMySql(connetionString, ServerVersion.AutoDetect(connetionString));
+            });
+
+            services.AddScoped<SeedingService>();
+            services.AddScoped<SellerService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, SeedingService seedingService)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                seedingService.Seed();
             }
             else
             {
